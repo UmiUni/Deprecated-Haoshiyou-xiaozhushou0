@@ -8,7 +8,7 @@ const logger = Logger.getLogger(`main`);
 
 export class HsyUtil {
   public static getNormalizedHsyGroupName(groupName:string):string {
-    return "SFSU" + groupName;
+    return "小助手" + groupName;
   }
   public static getHsyUserIdFromName = function(name) {
     return 'group-collected-' + name;
@@ -38,7 +38,7 @@ export class HsyUtil {
   };
 
   public static getHsyGroupEnum = function(topic:string):HsyGroupEnum {
-    if (!/SFSU/.test(topic))
+    if (!/小助手/.test(topic))
       return HsyGroupEnum.None;
     for (let key in GROUP_DICT) {
       let keyRegEx = new RegExp(HsyUtil.getNormalizedHsyGroupName(key));
