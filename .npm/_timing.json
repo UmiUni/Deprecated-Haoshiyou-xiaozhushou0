@@ -1,0 +1,7 @@
+{"version":"4.6.1","command":["run","node","-rm","-ti","/opt/project/src/main.js"],"logfile":"/bot/.npm/_logs/2017-07-25T00_28_20_929Z-debug.log","npm":89}
+{"version":"4.6.1","command":["run","node","-rm","-ti","/opt/project/src/main.js"],"logfile":"/bot/.npm/_logs/2017-07-25T00_46_48_646Z-debug.log","npm":85}
+{"version":"4.6.1","command":["run","node","/opt/project/src/main.js","-rm","-ti"],"logfile":"/bot/.npm/_logs/2017-07-25T01_24_29_919Z-debug.log","npm":106}
+{"version":"4.6.1","command":["run","node","/opt/project/src/main.js","-rm","-ti"],"logfile":"/bot/.npm/_logs/2017-07-25T01_27_19_450Z-debug.log","npm":87}
+{"version":"4.6.1","command":["run","node","/opt/project/src/main.js","-rm","-ti"],"logfile":"/bot/.npm/_logs/2017-07-25T01_36_29_182Z-debug.log","npm":101}
+{"version":"4.6.1","command":["run","node","/opt/project/src/main.js","-rm","-ti"],"logfile":"/bot/.npm/_logs/2017-07-25T01_38_53_390Z-debug.log","npm":99}
+{"version":"4.6.1","command":["run","node","/opt/project/src/main.js","-rm","-ti"],"logfile":"/bot/.npm/_logs/2017-07-25T02_00_52_353Z-debug.log","npm":92}
