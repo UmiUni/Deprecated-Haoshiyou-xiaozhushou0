@@ -80,6 +80,7 @@ export class HsyUtil {
   };
 
   public static addToBlacklist = async function(contact:Contact) {
+    if(contact.stranger()) return;
     if (await HsyUtil.isHsyAdmin(contact)) {
       logger.trace(`试图把管理员加入黑名单，${WeChatyApiX.contactToStringLong(contact)}...`);
     } else {
