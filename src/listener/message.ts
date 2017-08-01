@@ -16,6 +16,7 @@ import {
 } from "../global";
 import {HsyGroupEnum} from "../model";
 import {escape} from "querystring";
+import {MemberQueryFilter} from "wechaty/dist/src/room";
 
 if (process.env.CLOUDINARY_SECRET !== undefined && process.env.CLOUDINARY_SECRET.length > 0) {
   cloudinary.config({
@@ -49,22 +50,53 @@ exports = module.exports = async function onMessage(m) {
   await maybeAddToHsyGroups(m)// if true stops further processing
 
 };
+let findMemberFromGroup =async function(room:Room, msgContent):Promise<Array<Contact>>{
+     let count = 0;
+      //let foundUsers:Contact[] = new Array<Contact>(0);
+    logger.warn(`findMemberFromGroup member all:${room.memberList()}:`);
+    await room.refresh();
+    await room.ready();
+    let contacts: Contact[] = await room.memberList();
+    let nicknames:string[] = contacts.toString().split(',');
+     for (let i = 0; i<room.memberList().length; i++) {
+         await contacts[i].refresh();
+         logger.info(`user${count}:.group-Alias0:${nicknames[i]},group-Alias1:${room.alias(contacts[i])}alias:${contacts[i].alias()},:name${contacts[i].name()}`);
+         count++;
 
-let findMemberFromGroup = function(room:Room, regExp:RegExp, mentionName):Array<Contact> {
-
-    let count = 0;
-    for (let entry of room.memberList()) {
-        logger.info(`user${count}:`);
-        count++;
-        logger.info(entry.name()); // 1, "string", false
-        logger.info(entry.alias());
-        logger.info(WeChatyApiX.getGroupNickNameFromContact(entry));
-    }
-  return room.memberList().filter(c => {
-    return regExp.test(c.name())|| c.name()== mentionName || regExp.test(c.alias()) || c.alias()==mentionName
-        || regExp.test(WeChatyApiX.getGroupNickNameFromContact(c)) || WeChatyApiX.getGroupNickNameFromContact(c)==mentionName;
-  });
+         // if ((entry.alias() != null && msgContent.indexOf(entry.alias()) !== -1)
+         //     || (entry.name() != null && msgContent.indexOf(entry.name()) !== -1)
+         // ||((WeChatyApiX.getGroupNickNameFromContact(entry) != null)
+         //     && msgContent.indexOf(WeChatyApiX.getGroupNickNameFromContact(entry))!== -1))
+         //   foundUsers.push(entry);
+     }
+     //return foundUsers;
+    // return room.memberList().filter(c => {
+    //
+    //     (c.alias() != null && msgContent.indexOf(c.alias()) !== -1)
+    //     || (c.name() != null && msgContent.indexOf(c.name()) !== -1)
+    //     || ((WeChatyApiX.getGroupNickNameFromContact(c) != null) && msgContent.indexOf(WeChatyApiX.getGroupNickNameFromContact(c))!== -1)
+    // });
+    return null;
 };
+
+// let findMemberFromGroup = function(room:Room, regExp:RegExp, mentionName):Array<Contact> {
+//     //
+//     // let count = 0;
+//     // for (let entry of room.memberList()) {
+//     //     logger.info(`user${count}:`);
+//     //     count++;
+//     //     logger.info(entry.name()); // 1, "string", false
+//     //     logger.info(entry.alias());
+//     //     logger.info(WeChatyApiX.getGroupNickNameFromContact(entry));
+//     // }
+//   return room.memberList().filter(c => {
+//     return regExp.test(c.name())|| c.name()== mentionName || regExp.test(c.alias()) || c.alias()==mentionName
+//         || regExp.test(WeChatyApiX.getGroupNickNameFromContact(c)) || WeChatyApiX.getGroupNickNameFromContact(c)==mentionName;
+//   });
+// };
+
+
+
 
 // let savePic = async function(filename:string, picStream:NodeJS.ReadableStream):Promise<string> {
 //   logger.trace('IMAGE local filename: ' + filename);
@@ -152,38 +184,59 @@ let maybeBlacklistUser = async function(m: Message):Promise<Boolean> {
       /小助手/.test(m.room().topic()) &&
       /无关|修改群昵称/.test(m.content()) &&
       /^@/.test(m.content())) {
-    let mentionName = m.content().slice(1)/*ignoring@*/
-        .replace(" "/*Space Char in Chinese*/, " ").split(" ")[0];
+
+    // let mentionName = m.content().slice(1)/*ignoring@*/
+    //      .replace(" "/*Space Char in Chinese*/, " ").split(" ")[0];
+      //cater to case : @contactname contactname contactname 请不要发无关消息
+      //let mentionName = m.content().substring(1, m.content().indexOf(" "));
+   let mentionName = m.content().substring(1, m.content().length);
+      //format can be :  @contactpart1 contactpart2 contactpart3 msgpart1 msgpart2 msgpart3
     logger.debug(`寻找mentionName = ${mentionName}`);
-    let foundUsers = findMemberFromGroup(m.room(), new RegExp(mentionName), mentionName);
-    foundUsers = await foundUsers.filter(async c=> {
-      if (c.self()) {
-        logger.trace(`Ignoring SELF ${WeChatyApiX.contactToStringLong(c)}`);
-        return false;
-      } else if (await HsyUtil.isHsyAdmin(c)) {
-        logger.trace(`Ignoring ADMIN ${WeChatyApiX.contactToStringLong(c)}`);
-        return false;
-      }
-      return true;
-    });
+    //let foundUsers = findMemberFromGroup(m.room(), new RegExp(mentionName), mentionName);
+      m.room().refresh();
+      await m.room().ready();
+
+    let foundUsers = await findMemberFromGroup(m.room(), mentionName);
+    //   let foundUsers = findMemberFromGroup(m.room(), mentionName);
+
+
+      logger.debug(`m.room() + ${m.room()}`);
+      //let foundUsers: Array<Contact> = await m.room().memberAll(mentionName);
+      logger.debug(`memberAll + ${foundUsers}`);
+
+    // foundUsers = await foundUsers.filter(async c=> {
+    //   if (c.self()) {
+    //     logger.trace(`Ignoring SELF ${WeChatyApiX.contactToStringLong(c)}`);
+    //     return false;
+    //   } else if (await HsyUtil.isHsyAdmin(c)) {
+    //     logger.trace(`Ignoring ADMIN ${WeChatyApiX.contactToStringLong(c)}`);
+    //     return false;
+    //   }
+    //   return true;
+    // });
     if (foundUsers.length > 0) {
       logger.info(`Found ${foundUsers.length} user(s) being warned against: ${foundUsers}.`);
       if (foundUsers.length > 0) {
 
-        logger.info(`管理员"${m.from().name()}"对用户 ${mentionName} 发出警告`);
+        logger.info(`管理员"${m.from().name()}"对用户 ${mentionName} 发出警告`)
 
         // Repeat the warning from the admin
         await m.room().say(`感谢管理员@${m.from().name()}\n\n${m.content()}`);
 
-        let buffer = `管理员 ${m.from().name()}，你好，你刚才在${m.room().topic()}这个群` +
-            `里警告了用户@${mentionName}，符合这个名称的群内的用户有：\n`;
+        // let buffer = `管理员 ${m.from().name()}，你好，你刚才在${m.room().topic()}这个群` +
+        //     `里警告了用户@${mentionName}，符合这个名称的群内的用户有：\n`;
+          let buffer = `管理员，你好，你刚才在${m.room().topic()}这个群` +
+               `里警告了用户@${mentionName}，符合这个名称的群内的用户有：\n`;
         for (let i = 0; i < foundUsers.length; i++) {
           let candidate = foundUsers[i];
-          buffer += `${i}. 昵称:${candidate.name()}, 备注:${candidate.alias()}, ` +
+          if (candidate === null)
+            buffer += `没找到用户`;
+          else
+            buffer += `${i}. 昵称:${candidate.name()}, 备注:${candidate.alias()}, ` +
               `群昵称: ${WeChatyApiX.getGroupNickNameFromContact(candidate)} \n`;
         }
         buffer += `请问要不要把这个用户加黑名单？五分钟内回复 "加黑名单[数字编号]"\n`;
-        buffer += `例如 "加黑名单0"，将会把${foundUsers[1]} ` +
+        buffer += `例如 "加黑名单0"，将会把${foundUsers[0]} ` +
             `加入黑名单:${WeChatyApiX.contactToStringLong(foundUsers[0])}`;
         await m.from().say(buffer);
         GLOBAL_blackListCandidates[m.from().alias()] = {
@@ -203,6 +256,7 @@ let maybeBlacklistUser = async function(m: Message):Promise<Boolean> {
   }
   return false;
 };
+
 
 /**
  * @returns {Promise<boolean>} true if the message is processed (and should not be processed anymore)
