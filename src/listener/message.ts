@@ -57,42 +57,42 @@ let findMemberFromGroup = function(room:Room, regExp:RegExp):Array<Contact> {
   });
 };
 
-let savePic = async function(filename:string, picStream:NodeJS.ReadableStream):Promise<string> {
-  logger.trace('IMAGE local filename: ' + filename);
-  const fileStream = createWriteStream(filename);
-  let stream = await picStream;
-  // TODO(xinbenlv): this might cause the error of following
-  //   unhandledRejection: Error: not a media message [object Promise]
-  return new Promise<string>( /* executor */ function(resolve, reject) {
-    stream.pipe(fileStream)
-        .on('close', () => {
-          logger.trace('finish readyStream()');
-          cloudinary.v2.uploader.upload(filename, {
-            transformation: [
-              {quality:`auto:eco`, crop:`limit`, width: `1080`, height: `4000`}
-            ],
-            format: 'jpg'
-          }, function(error, result) {
-            if (error) {
-              logger.warn(`error = ${JSON.stringify(error)}`);
-              logger.warn(`There is an error in saveMediaFile upload of cloudinary`);
-              reject(error);
-            } else {
-              logger.trace(`Uploaded an image: ${JSON.stringify(result)}, size = ${result.bytes}`);
-              let id = result.public_id;
-              resolve(result.public_id);
-            }
-          });
-        });
-  }).then(publicId => {
-    logger.trace(`The PublicId result is ${publicId}`);
-    return publicId;
-  });
-};
-let saveImgFileFromMsg = async function(message: Message):Promise<any> {
-  const filename = 'tmp/img/' + message.filename();
-  return await savePic(filename, await message.readyStream());
-};
+// let savePic = async function(filename:string, picStream:NodeJS.ReadableStream):Promise<string> {
+//   logger.trace('IMAGE local filename: ' + filename);
+//   const fileStream = createWriteStream(filename);
+//   let stream = await picStream;
+//   // TODO(xinbenlv): this might cause the error of following
+//   //   unhandledRejection: Error: not a media message [object Promise]
+//   return new Promise<string>( /* executor */ function(resolve, reject) {
+//     stream.pipe(fileStream)
+//         .on('close', () => {
+//           logger.trace('finish readyStream()');
+//           cloudinary.v2.uploader.upload(filename, {
+//             transformation: [
+//               {quality:`auto:eco`, crop:`limit`, width: `1080`, height: `4000`}
+//             ],
+//             format: 'jpg'
+//           }, function(error, result) {
+//             if (error) {
+//               logger.warn(`error = ${JSON.stringify(error)}`);
+//               logger.warn(`There is an error in saveMediaFile upload of cloudinary`);
+//               reject(error);
+//             } else {
+//               logger.trace(`Uploaded an image: ${JSON.stringify(result)}, size = ${result.bytes}`);
+//               let id = result.public_id;
+//               resolve(result.public_id);
+//             }
+//           });
+//         });
+//   }).then(publicId => {
+//     logger.trace(`The PublicId result is ${publicId}`);
+//     return publicId;
+//   });
+// };
+// let saveImgFileFromMsg = async function(message: Message):Promise<any> {
+//   const filename = 'tmp/img/' + message.filename();
+//   return await savePic(filename, await message.readyStream());
+// };
 
 /**
  * If admin mentioned a member in the 好室友 group and says "无关", then it's a warning
@@ -140,7 +140,7 @@ let maybeBlacklistUser = async function(m: Message):Promise<Boolean> {
     }
     return true;
   } else if (m.room() !== null &&
-      /好室友/.test(m.room().topic()) &&
+      /小助手/.test(m.room().topic()) &&
       /无关|修改群昵称/.test(m.content()) &&
       /^@/.test(m.content())) {
     let mentionName = m.content().slice(1)/*ignoring@*/
