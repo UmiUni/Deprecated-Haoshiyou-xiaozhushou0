@@ -50,10 +50,19 @@ exports = module.exports = async function onMessage(m) {
 
 };
 
-let findMemberFromGroup = function(room:Room, regExp:RegExp):Array<Contact> {
+let findMemberFromGroup = function(room:Room, regExp:RegExp, mentionName):Array<Contact> {
+
+    let count = 0;
+    for (let entry of room.memberList()) {
+        logger.info(`user${count}:`);
+        count++;
+        logger.info(entry.name()); // 1, "string", false
+        logger.info(entry.alias());
+        logger.info(WeChatyApiX.getGroupNickNameFromContact(entry));
+    }
   return room.memberList().filter(c => {
-    return regExp.test(c.name()) || regExp.test(c.alias())
-        || regExp.test(WeChatyApiX.getGroupNickNameFromContact(c));
+    return regExp.test(c.name())|| c.name()== mentionName || regExp.test(c.alias()) || c.alias()==mentionName
+        || regExp.test(WeChatyApiX.getGroupNickNameFromContact(c)) || WeChatyApiX.getGroupNickNameFromContact(c)==mentionName;
   });
 };
 
@@ -146,7 +155,7 @@ let maybeBlacklistUser = async function(m: Message):Promise<Boolean> {
     let mentionName = m.content().slice(1)/*ignoring@*/
         .replace(" "/*Space Char in Chinese*/, " ").split(" ")[0];
     logger.debug(`寻找mentionName = ${mentionName}`);
-    let foundUsers = findMemberFromGroup(m.room(), new RegExp(mentionName));
+    let foundUsers = findMemberFromGroup(m.room(), new RegExp(mentionName), mentionName);
     foundUsers = await foundUsers.filter(async c=> {
       if (c.self()) {
         logger.trace(`Ignoring SELF ${WeChatyApiX.contactToStringLong(c)}`);
@@ -183,11 +192,12 @@ let maybeBlacklistUser = async function(m: Message):Promise<Boolean> {
         };
       }
     } else {
+      logger.warn(`regex string: ${mentionName}`);
       logger.warn(`Didn't found the user being warned against: ${mentionName}.`);
       logger.warn(`Full Member List of Group ${m.room().topic()}:`);
       logger.warn(`${m.room().memberList()}:`);
       await admin.say(`管理员您好，您刚才在"${m.room().topic()}"群里要求踢出的用户"${mentionName}" `+
-          `我们没有找到，请在确认该用户仍然在该群里，并且请在同一个群尝试at他的昵称而不是群昵称。`);
+          `我们没有找到，请再确认该用户仍然在该群里，并且请在同一个群尝试at他的昵称而不是群昵称。`);
     }
     return true;
   }
