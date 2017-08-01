@@ -60,7 +60,7 @@ export class HsyUtil {
   };
 
   public static findHsyBigTeamRoom = async function():Promise<Room> {
-    return await HsyUtil.findHsyRoomByKey('小助手测试群0');
+    return await HsyUtil.findHsyRoomByKey('测试群0');
   };
 
   public static kickContactFromRoom =
